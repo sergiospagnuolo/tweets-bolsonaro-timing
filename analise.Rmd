@@ -1,0 +1,28 @@
+---
+title: "Tweets de Bolsonaro vs Carlos - coincidências"
+author: "Sérgio Spagnuolo"
+date: "2/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+Os dados considerados aqui vão de 1º de agosto de 2018 a 12 de fevereiro de 2018, obtidos a partir das contas principais de Twitter do presidente Jair Bolsonaro e de seu filho Carlos Bolsonaro. 
+
+A análise excluiu retuítes. 
+
+```{r transforma_dados}
+dl <- d %>%
+  group_by(nome) %>% 
+  mutate(rn = row_number()) %>% 
+  spread(nome, hora) %>%
+  select(-rn)
+```
+
+
+
+
+
+
