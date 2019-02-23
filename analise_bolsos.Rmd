@@ -81,7 +81,7 @@ Fiz esse estudo a pedido do [Intercept Brasil](https://theintercept.com/brasil/)
 
 ## Dados
 
-Os dados são a partir de 1º de janeiro de 2018, obtidos diretamente das contas oficiais de Twitter do presidente Jair Bolsonaro [@jairbolsonaro](https://twitter.com/jairbolsonaro/) e de seu filho Carlos Bolsonaro [@CarlosBolsonaro](https://twitter.com/CarlosBolsonaro). 
+Os dados são a partir de 1º de janeiro de 2018, obtidos diretamente das contas oficiais de Twitter do presidente [jairbolsonaro](https://twitter.com/jairbolsonaro/) e de seu filho [CarlosBolsonaro](https://twitter.com/CarlosBolsonaro). 
 
 Foi utilizada a API da ferramenta [Workbench](http://workbenchdata.com/) para extrair e armazenar esses dados. 
 
