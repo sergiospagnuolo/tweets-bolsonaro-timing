@@ -301,6 +301,9 @@ d$periodo &lt;- ifelse(d$hora &gt; 12 &amp; d$hora &lt;= 15,&quot;tarde 1&quot;,
 
 # retweets &lt;- count(d, d$retweeted_status_screen_name)
 
+# conta total de ocorrências de fonte de tweets (tipo de aparelho)
+fonte &lt;- count(d, d$source)
+
 # conta o número de retweets
 retweets &lt;- d %&gt;% 
   drop_na() %&gt;%
@@ -468,6 +471,30 @@ kable(stats[c(3,4,5)], caption = &quot;Estatísticas básicas da análise em fev
 <tr class="even">
 <td align="left">JoelAlexandreM</td>
 <td align="right">7</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>kable(fonte, caption = &quot;Tweets de @jairbolsonaro por tipo de dispositivo celular&quot;)</code></pre>
+<table>
+<caption>Tweets de <span class="citation">@jairbolsonaro</span> por tipo de dispositivo celular</caption>
+<thead>
+<tr class="header">
+<th align="left">d$source</th>
+<th align="right">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Twitter for Android</td>
+<td align="right">21</td>
+</tr>
+<tr class="even">
+<td align="left">Twitter for iPhone</td>
+<td align="right">6812</td>
+</tr>
+<tr class="odd">
+<td align="left">Twitter Web Client</td>
+<td align="right">2</td>
 </tr>
 </tbody>
 </table>

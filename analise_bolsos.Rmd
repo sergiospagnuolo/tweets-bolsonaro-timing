@@ -141,6 +141,9 @@ d$periodo <- ifelse(d$hora > 12 & d$hora <= 15,"tarde 1",
 
 # retweets <- count(d, d$retweeted_status_screen_name)
 
+# conta total de ocorrências de fonte de tweets (tipo de aparelho)
+fonte <- count(d, d$source)
+
 # conta o número de retweets
 retweets <- d %>% 
   drop_na() %>%
@@ -195,6 +198,8 @@ stats$"valor (em minutos)" <- round(stats$valor / 60, digits = 1)
 kable(stats[c(3,4,5)], caption = "Estatísticas básicas da análise em fev.2019")
 
 kable(retweets, caption = "Top 15 retweets por usuário na conta de @jairbolsonaro")
+
+kable(fonte, caption = "Tweets de @jairbolsonaro por tipo de dispositivo celular")
 
 
 ```
