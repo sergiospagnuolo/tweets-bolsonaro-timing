@@ -1,0 +1,205 @@
+---
+title: "Proximidade temporal entre tweets de Jair Bolsonaro e Carlos Bolsonaro"
+author: "Sérgio Spagnuolo, editor do [Volt Data Lab](www.voltdata.info) - código no [Github](https://github.com/voltdatalab/tweets-bolsonaro-timing)"
+date: "23/02/2019"
+output: html_document
+assets:
+  css:
+    - "https://fonts.googleapis.com/css?family=Inconsolata:400,700|Merriweather+Sans:400,700"
+---
+
+<style>
+body{
+  font-family: 'Merriweather Sans', sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  background-color: $f4f4f4;
+}
+
+h1,h2,h3,h4 {
+  font-family: 'Inconsolata', sans-serif;
+  color: #386cb0;
+  margin: 20px 0
+}
+
+h1 {
+  font-weight: bold;
+}
+
+h3 {
+  padding: 7px 10px; 
+  color: #222;
+  background-color: #cbcbcb; 
+  display: inline;
+  font-size: 16px;
+}
+h4 {
+  color: #f0027f
+}
+
+p {
+  margin: 25px 0;
+}
+
+a{
+  color: #386cb0;
+}
+
+a:hover {
+  #386cb0
+}
+
+.hljs-string{
+  color: #386cb0
+}
+
+.hljs-number{
+  color: #386cb0
+}
+
+</style>
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(knitr)
+```
+
+---
+
+
+
+## Contexto
+
+O twitter de Jair Bolsonaro é praticamente um "Diário Não-Oficial" do governo federal, um fórum utilizado pelo mandatário para anúncios relacionados ao governo federal, funcionando quase como um "diário oficial" informal, cheio de intrigas e reviravoltas.
+
+Dessa forma, é válido analisar a potencial influência que seu filho Carlos Bolsonaro tem sobre essa conta do país. Twitteiro contumaz, próximo do pai, especula-se que Carlos seja um dos administradores da conta do pai na rede social.
+
+Fiz esse estudo a pedido do [Intercept Brasil](https://theintercept.com/brasil/), resultando em um texto do jornalista [Alexandre Santi](https://twitter.com/alexdesanti). 
+
+### [Acesse o texto do Intercept aqui](https://theintercept.com/2019/02/22/carlos-bolsonaro-twiter-jair-bolsonaro-presidente/)
+
+## Dados
+
+Os dados são a partir de 1º de janeiro de 2018, obtidos diretamente das contas oficiais de Twitter do presidente Jair Bolsonaro [@jairbolsonaro](https://twitter.com/jairbolsonaro/) e de seu filho Carlos Bolsonaro [@CarlosBolsonaro](https://twitter.com/CarlosBolsonaro). 
+
+Foi utilizada a API da ferramenta [Workbench](http://workbenchdata.com/) para extrair e armazenar esses dados. 
+
+A fim de mostrar interação entre contas, a análise inclui retuítes. 
+
+Às vezes, o Workbench desabilita o retorno dos dados até que alguém acesse a tabela diretamente no aplicativo, retornando o resultado *{}* nos dados. Caso isso aconteça, basta acessar o link a seguir para carregar os dados, e a URL com o csv voltará a funcionar sem precisar fazer mais nada. 
+
+**[Link para reativar dados](https://app.workbenchdata.com/workflows/7924/)**
+
+```{r carrega}
+# Carrega os dados estruturados direto da API do Workbench
+d <- read.csv("https://app.workbenchdata.com/public/moduledata/live/45112.csv", header = T)
+
+# estrutura dos dados (exceto texto de tuítes, que quebravam a estética da tabela)
+names(d)
+```
+
+Após o carregamento dos dados e a criação de uma coluna nova para separar apenas as horas, fazemos alguma limpeza nos dados e forçamos a configuração do tipo certo de dado para cada coluna, especialmente forçando a formatação de data e hora. 
+
+É possível, para uma segunda análise, excluir os retuítes das contas fazendo um _comment out_ no fim desse bloco de código. 
+
+```{r limpeza}
+# força formatação pra date-time na coluna created_at
+d$created_at <- ymd_hms(d$created_at)
+
+#ordena por data
+d <- d[order(d$created_at),]
+
+# separa colunas
+d <- separate(d, created_at, c("dia", "hora"), sep = " ", remove = F)
+d$hora <- gsub("\\:.*","",d$hora)
+
+# limpa a coluna para ter apenas a hora-relógio cheia numeral
+d$hora <- gsub("\\:.*","",d$hora)
+d$hora <- as.numeric(d$hora)
+
+# remove retuítes
+# d <- dplyr::filter(d, !str_detect(text, '(RT)'))
+```
+
+A partir dessa organização dos dados, vamos criar buckets de 3 em 3 horas a fim de definir os períodos do dia que serão referência de proximidade dos tweets. Isso acrescenta uma nova camada de informação que nos permite analisar os dados mais facilmente a partir de intervalos de tempo definidos. 
+
+Note que a única exceção para período de horas é o último da noite e o primeiro da manhã: as primeiras horas da madrugada tem quatro horas, enquanto as últimas da noite tem duas. 
+
+Essa diferença deve-se ao fato de os dados do Twitter estarem formatados como meia-noite sendo 00:00, em vez de 24:00. Como transformamos o horário em valor numeral, isso evita mais complexidade no código para identificar a meia noite como 00:00. São horários de menor movimentação, houve diferença mínima nos dados finais. 
+
+```{r transforma_dados}
+# cria variavel de periodos em buckets de 3 horas
+d$periodo <- ifelse(d$hora > 12 & d$hora <= 15,"tarde 1", 
+                    ifelse(d$hora > 15 & d$hora <= 18,"tarde 2", 
+                           ifelse(d$hora > 18 & d$hora <= 21,"noite 1", 
+                                  ifelse(d$hora > 21 & d$hora <= 23 ,"noite 2", 
+                                         ifelse(d$hora >= 0 & d$hora <= 3,"madrugada 1", 
+                                                ifelse(d$hora > 3 & d$hora <= 6,"madrugada 2", 
+                                                       ifelse(d$hora > 6 & d$hora <= 9,"manha 1", 
+                                                              ifelse(d$hora > 9 & d$hora <= 12,"manha 2", "n/a"))))))))
+
+# retweets <- count(d, d$retweeted_status_screen_name)
+
+# conta o número de retweets
+retweets <- d %>% 
+  drop_na() %>%
+  group_by(retweeted_status_screen_name) %>%
+  filter(screen_name == "jairbolsonaro") %>%
+  summarize(Count=n()) %>%
+  arrange(desc(Count))
+
+retweets <- head(retweets, n = 16, addrownums = TRUE)
+
+#agrupa elementos
+dl <- d %>%
+  select(dia, periodo, screen_name, created_at) %>%
+  group_by(dia, periodo, screen_name) %>% 
+  mutate(rn = row_number()) %>% 
+  arrange(created_at) %>% 
+  spread(screen_name, created_at) %>% 
+  select(-rn)
+
+# soma as colunas, transformando em segundos
+dl$jair_carlos <- dl$CarlosBolsonaro - dl$jairbolsonaro
+
+# tira o sinal de menos, para que dados sejam comparáveis também em vice-versa e depois força diferença como número
+dl$jair_carlos <- gsub("-", "", dl$jair_carlos)
+dl$jair_carlos <- as.numeric(dl$jair_carlos)
+
+# força dia como data 
+dl$dia <- lubridate::ymd(dl$dia)
+
+# cria dataframe com subset com filtro de datas
+df <- subset(dl, dia > "2018-01-01" & dia < "2019-02-13")
+
+# escreve o csv
+# write.csv(df, "d.csv")
+```
+
+A seguir subtraímos as colunas para saber o spread entre um tweet e outro dentro de um mesmo período de três horas.
+
+A principal análise a ser feita recai sobre a mediana de tempo entre os tweets. Considero que a mediana no caso seja muito mais adequada do que a média por conta da grande dispersão entre os dados (desvio padrão de 2281 segundos).
+
+```{r analise}
+#summary(df$jair_carlos)[c(1,3,4,6)]
+recorte <- subset(df, select=c(jair_carlos))
+
+stats <- as.data.frame(summary(recorte))
+
+stats <- separate(stats, Freq, c("medição", "valor (em segundos)"), sep = ":", remove = T)
+stats$"valor (em segundos)" <- as.numeric(stats$valor)
+stats$"valor (em minutos)" <- round(stats$valor / 60, digits = 1)
+
+
+kable(stats[c(3,4,5)], caption = "Estatísticas básicas da análise em fev.2019")
+
+kable(retweets, caption = "Top 15 retweets por usuário na conta de @jairbolsonaro")
+
+
+```
+
+
+
+
+
